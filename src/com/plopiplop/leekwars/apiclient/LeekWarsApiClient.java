@@ -46,7 +46,7 @@ public class LeekWarsApiClient {
         } catch (PluginNotConfiguredException e) {
             Notifications.Bus.notify(new Notification("LeekScript", "Can't connect to LeekWars server", "Please configure the LeekScript plugin", NotificationType.ERROR));
         } catch (ApiException e) {
-            Notifications.Bus.notify(new Notification("LeekScript", "Can't connect to LeekWars server", "An error occured while calling the LeekWars API", NotificationType.ERROR));
+            Notifications.Bus.notify(new Notification("LeekScript", "Can't connect to LeekWars server", e.getMessage(), NotificationType.ERROR));
         }
     }
 
