@@ -88,20 +88,25 @@ public class DownloadScriptsTask implements Runnable {
         assert srcDirectory != null;
 
         for (Map.Entry<Integer, String> entry : LeekWarsApiClient.getInstance().listScripts().entrySet()) {
-            String leekScript = LeekWarsApiClient.getInstance().downloadScript(entry.getKey());
+            // TODO run async
+            downloadScript(srcDirectory, entry);
+        }
+    }
 
-            String fileName = String.format("%s__%s.lks", entry.getValue(), entry.getKey());
+    private void downloadScript(PsiDirectory srcDirectory, Map.Entry<Integer, String> entry) throws IOException, PluginNotConfiguredException, ApiException {
+        String leekScript = LeekWarsApiClient.getInstance().downloadScript(entry.getKey());
 
-            PsiFile file = PsiUtils.createDummyFile(project, fileName, leekScript);
+        String fileName = String.format("%s__%s.lks", entry.getValue(), entry.getKey());
 
-            PsiFile existingFile = srcDirectory.findFile(fileName);
+        PsiFile file = PsiUtils.createDummyFile(project, fileName, leekScript);
 
-            if (existingFile == null) {
-                srcDirectory.add(file);
-            } else {
-                assert existingFile.getViewProvider().getDocument() != null;
-                existingFile.getViewProvider().getDocument().setText(file.getText());
-            }
+        PsiFile existingFile = srcDirectory.findFile(fileName);
+
+        if (existingFile == null) {
+            srcDirectory.add(file);
+        } else {
+            assert existingFile.getViewProvider().getDocument() != null;
+            existingFile.getViewProvider().getDocument().setText(file.getText());
         }
     }
 

@@ -298,9 +298,11 @@ public class LeekWarsApiClient {
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"))){
                 writer.write(postData);
                 out.flush();
-                Thread.sleep(100); // Prevent 429 Too many requests
-            } catch (InterruptedException ignored) {}
+            }
         }
+        try {
+            Thread.sleep(100); // Prevent 429 Too many requests
+        } catch (InterruptedException ignored) {}
         connection.connect();
 
         return connection;
