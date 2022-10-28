@@ -227,7 +227,7 @@ public class LeekWarsApiClient {
             );
         } else {
             System.out.println(CharStreams.toString(new InputStreamReader(connection.getErrorStream())));
-            throw new ApiException("securePost", url, params);
+            throw new ApiException("securePost", url, params, connection.getResponseMessage());
         }
     }
 
@@ -240,7 +240,7 @@ public class LeekWarsApiClient {
                     responseType
             );
         } else {
-            throw new ApiException("secureDelete", url, null);
+            throw new ApiException("secureDelete", url, null, connection.getResponseMessage());
         }
     }
 
@@ -253,7 +253,7 @@ public class LeekWarsApiClient {
                     responseType
             );
         } else {
-            throw new ApiException("secureGet", url, null);
+            throw new ApiException("secureGet", url, null, connection.getResponseMessage());
         }
     }
 
@@ -266,7 +266,7 @@ public class LeekWarsApiClient {
                     responseType
             );
         } else {
-            throw new ApiException("get", url, null);
+            throw new ApiException("get", url, null, connection.getResponseMessage());
         }
     }
 
