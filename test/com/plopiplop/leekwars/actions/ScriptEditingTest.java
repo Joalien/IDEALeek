@@ -14,7 +14,7 @@ public class ScriptEditingTest extends LightCodeInsightFixtureTestCase {
     private static final String SCRIPT_CONTENT = "var foo = getLeek();";
     private static final String SCRIPT_NEW_CONTENT = "//You got it man!\nvar foo = getLeek();";
 
-    public void testScriptEditionWorkflow() throws IOException, PluginNotConfiguredException, CompilationException, ApiException {
+    public void testScriptEditionWorkflow() throws IOException, PluginNotConfiguredException, CompilationException, ApiException, InterruptedException {
         LSSettings.getInstance().siteLogin = System.getenv("LKS_LOGIN");
         LSSettings.getInstance().sitePassword = System.getenv("LKS_PASSWORD");
 
@@ -25,6 +25,8 @@ public class ScriptEditingTest extends LightCodeInsightFixtureTestCase {
         assertEquals("idealeek", scripts.get(scriptId));
 
         assertEquals(SCRIPT_CONTENT, LeekWarsApiClient.getInstance().downloadScript(scriptId));
+
+        Thread.sleep(500); // Avoid 429 Too Many Requests Error
 
         LeekWarsApiClient.getInstance().uploadScript(scriptId, "idealeek", SCRIPT_NEW_CONTENT);
 

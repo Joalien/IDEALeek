@@ -3,4 +3,4 @@
 workspace.xml
 /.gradle
 /build
-/.idea/*
+.idea/*

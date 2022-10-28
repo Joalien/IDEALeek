@@ -5,7 +5,7 @@ public class Constant {
     private Object value;
     private int type;
     private int category;
-    private int deprecated;
+    private boolean deprecated;
     public String description;
 
     public String getName() {
@@ -24,7 +24,7 @@ public class Constant {
         return category;
     }
 
-    public int getDeprecated() {
+    public boolean getDeprecated() {
         return deprecated;
     }
 

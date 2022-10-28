@@ -1,7 +1,6 @@
 package com.plopiplop.leekwars.apiclient;
 
 import com.google.common.io.CharStreams;
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -17,11 +16,11 @@ import com.plopiplop.leekwars.options.PluginNotConfiguredException;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class LeekWarsApiClient {
 
@@ -201,7 +200,7 @@ public class LeekWarsApiClient {
     }
 
     public int createScript(String name, String content) throws IOException, PluginNotConfiguredException, CompilationException, ApiException {
-        AIResponse resp = securePost("/api/ai/new", "folder_id=0&v2=false&version=10", AIResponse.class);
+        AIResponse resp = securePost("/api/ai/new-name", "folder_id=0&name="+name+"&version=2", AIResponse.class);
 
         int id = resp.getAi().getId();
 
@@ -211,11 +210,11 @@ public class LeekWarsApiClient {
     }
 
     public void deleteScript(int scriptId) throws IOException, PluginNotConfiguredException, ApiException {
-        securePost("/api/ai/delete", "ai_id=" + scriptId, Void[].class);
+        secureDelete("/api/ai/delete", "ai_id=" + scriptId, Void[].class);
     }
 
     private <T> T securePost(String url, String params, Class<T> responseType) throws IOException, PluginNotConfiguredException, ApiException {
-        HttpURLConnection connection = getConnection(url, params, true, true);
+        HttpURLConnection connection = getConnection(url, params, true, true, "POST");
 
         if (connection.getResponseCode() == 200) {
             String json = CharStreams.toString(new InputStreamReader(connection.getInputStream()));
@@ -232,8 +231,21 @@ public class LeekWarsApiClient {
         }
     }
 
+    private <T> T secureDelete(String url, String params, Class<T> responseType) throws IOException, PluginNotConfiguredException, ApiException {
+        HttpURLConnection connection = getConnection(url, params, true, true, "DELETE");
+
+        if (connection.getResponseCode() == 200) {
+            return new GsonBuilder().create().fromJson(
+                    new InputStreamReader(connection.getInputStream()),
+                    responseType
+            );
+        } else {
+            throw new ApiException("secureDelete", url, null);
+        }
+    }
+
     private <T> T secureGet(String url, Class<T> responseType) throws IOException, PluginNotConfiguredException, ApiException {
-        HttpURLConnection connection = getConnection(url, null, true, true);
+        HttpURLConnection connection = getConnection(url, null, true, true, "GET");
 
         if (connection.getResponseCode() == 200) {
             return new GsonBuilder().create().fromJson(
@@ -246,7 +258,7 @@ public class LeekWarsApiClient {
     }
 
     private <T> T get(String url, Class<T> responseType) throws IOException, PluginNotConfiguredException, ApiException {
-        HttpURLConnection connection = getConnection(url, null, true, false);
+        HttpURLConnection connection = getConnection(url, null, true, false, "GET");
 
         if (connection.getResponseCode() == 200) {
             return new GsonBuilder().create().fromJson(
@@ -258,7 +270,7 @@ public class LeekWarsApiClient {
         }
     }
 
-    private HttpURLConnection getConnection(String url, String postData, boolean followRedirects, boolean appendToken) throws PluginNotConfiguredException, IOException {
+    private HttpURLConnection getConnection(String url, String postData, boolean followRedirects, boolean appendToken, String method) throws PluginNotConfiguredException, IOException {
         if (!LSSettings.getInstance().isValid()) {
             throw new PluginNotConfiguredException();
         }
@@ -271,7 +283,7 @@ public class LeekWarsApiClient {
 
         HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(buildUrl(url));
         connection.setDoInput(true);
-        connection.setRequestMethod("GET");
+        connection.setRequestMethod(method);
         connection.setInstanceFollowRedirects(followRedirects);
         if (appendToken) {
             connection.setRequestProperty("Authorization", "Bearer " + token);
@@ -280,7 +292,6 @@ public class LeekWarsApiClient {
 
         if (postData != null) {
             connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
 
             DataOutputStream out = new DataOutputStream(connection.getOutputStream());
@@ -296,27 +307,35 @@ public class LeekWarsApiClient {
     }
 
     private void connectToLeekWars() throws IOException, PluginNotConfiguredException {
-        String url = buildUrl(String.format(
-                "/api/farmer/login-token/%s/%s",
-                LSSettings.getInstance().getSiteLogin(),
-                LSSettings.getInstance().getSitePassword())
-        );
-        HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(url);
+        Map<String,String> arguments = new HashMap<>();
+        arguments.put("login", encode(LSSettings.getInstance().getSiteLogin()));
+        arguments.put("password", encode(LSSettings.getInstance().getSitePassword()));
 
-        connection.connect();
+        HttpURLConnection conn= (HttpURLConnection) new URL(buildUrl("/api/farmer/login-token")).openConnection();
+        conn.setDoOutput(true);
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        try(DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+            wr.write(getDataString(arguments).getBytes());
+        }
 
-        GsonBuilder builder = new GsonBuilder();
-        Gson gson = builder.create();
-
-        Map map = gson.fromJson(new InputStreamReader(connection.getInputStream()), Map.class);
-
-        //System.out.println(map);
+        Map map = new GsonBuilder().create().fromJson(new InputStreamReader(conn.getInputStream()), Map.class);
 
         if (map.containsKey("token")) {
             token = map.get("token").toString();
         } else {
             throw new PluginNotConfiguredException();
         }
+    }
+
+    private static String encode(String param) throws UnsupportedEncodingException {
+        return URLEncoder.encode(param, StandardCharsets.UTF_8.name());
+    }
+
+    private String getDataString(Map<String, String> params) {
+        return params.entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.joining("&"));
     }
 
     private String buildUrl(String path) {
