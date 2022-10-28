@@ -1,10 +1,7 @@
 package com.plopiplop.leekwars.editor;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -25,13 +22,8 @@ public class MissingApiNotificationProvider extends EditorNotifications.Provider
 
     private final Project myProject;
 
-    public MissingApiNotificationProvider(Project project, final EditorNotifications notifications) {
+    public MissingApiNotificationProvider(Project project) {
         myProject = project;
-        myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-            public void rootsChanged(ModuleRootEvent event) {
-                notifications.updateAllNotifications();
-            }
-        });
     }
 
     @NotNull
