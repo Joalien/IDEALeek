@@ -12,7 +12,7 @@ repositories {
 }
 
 plugins {
-    id("org.jetbrains.intellij") version "0.7.2"
+    id("org.jetbrains.intellij") version "1.5.3"
     id("org.sonarqube") version "3.1.1"
     jacoco
     java
@@ -27,17 +27,9 @@ dependencies {
 }
 
 intellij {
-    version = ideaVersion
-    downloadSources = downloadIdeaSources.toBoolean()
-    updateSinceUntilBuild = false
-    val plugins = testPlugins.split(",")
-    if (testPlugins.isNotBlank() && plugins.isNotEmpty()) {
-        setPlugins(*plugins.toTypedArray())
-    }
-
-    tasks.withType<RunPluginVerifierTask> {
-        setIdeVersions(listOf("IU-2019.2.3", "IU-2020.3.2"))
-    }
+    version.set(ideaVersion)
+    downloadSources.set(downloadIdeaSources.toBoolean())
+    updateSinceUntilBuild.set(false)
 }
 
 tasks.jacocoTestReport {
