@@ -294,12 +294,12 @@ public class LeekWarsApiClient {
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
 
-            DataOutputStream out = new DataOutputStream(connection.getOutputStream());
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
-            writer.write(postData);
-            out.flush();
-            writer.close();
-            out.close();
+            try (DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"))){
+                writer.write(postData);
+                out.flush();
+                Thread.sleep(100); // Prevent 429 Too many requests
+            } catch (InterruptedException ignored) {}
         }
         connection.connect();
 
